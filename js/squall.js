@@ -20,16 +20,14 @@ var mainState = {
 		
 		this.gunTowers = [];
 		for (var i = 0; i < GUN_TOWERS_N; i++) {
-			var gunTower = this.createGunTower(game.world.width / GUN_TOWERS_N * (i + 0.5), game.world.height - GROUND_HEIGHT);
+			var gunTowerX = game.world.width / GUN_TOWERS_N * (i + 0.5);
+			var gunTower = this.createGunTower(gunTowerX, game.world.height - GROUND_HEIGHT);
 			gunTower.anchor.setTo(0.5, 1);
-			
-			console.log(game.world.width / i);
 			
 			this.gunTowers.push(gunTower);
 		}
 		
-		this.meteors = [];
-		this.createMeteor();
+		this.meteors = this.createMeteors();
 
 		console.info('main state created');
 	},
@@ -40,6 +38,14 @@ var mainState = {
 	
 	update: function() {
 		
+	},
+	
+	createMeteors: function() {
+		var meteors = game.add.group();
+		meteors.enableBody = true;
+		meteors.physicsBodyType = Phaser.Physics.ARCADE;
+		
+		return meteors;
 	},
 	
 	createMeteor: function() {
