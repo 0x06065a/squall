@@ -17,46 +17,66 @@ var mainState = {
 		game.stage.backgroundColor = '#124184';
 
 		this.ground = game.add.sprite(0, game.world.height - GROUND_HEIGHT, 'ground');
+        game.physics.enable(this.ground, Phaser.Physics.ARCADE);
+        this.ground.body.immovable = true;
 		
-		this.gunTowers = [];
-		for (var i = 0; i < GUN_TOWERS_N; i++) {
-			var gunTowerX = game.world.width / GUN_TOWERS_N * (i + 0.5);
-			var gunTower = this.createGunTower(gunTowerX, game.world.height - GROUND_HEIGHT);
-			gunTower.anchor.setTo(0.5, 1);
-			
-			this.gunTowers.push(gunTower);
-		}
-		
+		this.gunTowers = this.createGunTowers();
 		this.meteors = this.createMeteors();
+        this.meteorDroppingTime = game.time.now;
 
 		console.info('main state created');
 	},
 	
-	createGunTower: function(x, y) {
-		return game.add.sprite(x, y, 'gunTower');
-	},
-	
 	update: function() {
-		
+		this.dropMeteor();
+        this.checkCollisions();
 	},
+
+    checkCollisions: function() {
+        game.physics.arcade.overlap(this.ground, this.meteors, function(ground, meteor) {
+            meteor.kill();
+        }, null, this);
+    },
+
+    createGunTowers: function() {
+        var gunTowers = [];
+        for (var i = 0; i < GUN_TOWERS_N; i++) {
+            var gunTowerX = game.world.width / GUN_TOWERS_N * (i + 0.5);
+            var gunTower = game.add.sprite(gunTowerX, game.world.height - GROUND_HEIGHT, 'gunTower');
+            gunTower.anchor.setTo(0.5, 1);
+
+            gunTowers.push(gunTower);
+        }
+        return gunTowers;
+    },
 	
 	createMeteors: function() {
 		var meteors = game.add.group();
 		meteors.enableBody = true;
 		meteors.physicsBodyType = Phaser.Physics.ARCADE;
-		
+        meteors.createMultiple(30, 'meteor');
+        meteors.setAll('anchor.x', 0.5);
+        meteors.setAll('anchor.y', 1);
+        meteors.setAll('outOfBoundsKill', true);
+        meteors.setAll('checkWorldBounds', true);
+
 		return meteors;
 	},
-	
-	createMeteor: function() {
-		var meteor = game.add.sprite(game.rnd.between(100, 700), 0, 'meteor');
-		meteor.anchor.setTo(0.5, 1);
-		
-		this.meteors.push(meteor);
-		
-		var delay = Phaser.Timer.SECOND * game.rnd.realInRange(0.5, 2);
-		game.time.events.add(delay, this.createMeteor, this);
-	}
+
+    dropMeteor: function() {
+        if (game.time.now < this.meteorDroppingTime) {
+            return;
+        }
+        this.meteorDroppingTime = game.time.now + 5000;
+
+        var meteor = this.meteors.getFirstExists(false);
+        if (!meteor) {
+            return;
+        }
+
+        meteor.reset(game.rnd.between(100, 700), 0);
+        game.physics.arcade.accelerateToXY(meteor, game.rnd.between(100, 700), game.world.height);
+    }
 };
 
 game.state.add('main', mainState);
